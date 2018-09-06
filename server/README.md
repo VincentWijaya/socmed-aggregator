@@ -18,6 +18,13 @@ Parameters | Type
 repo name | String
 username | String
 
+Routes need login:
+
+`
+/user/createRepo | POST
+/user/unstar | DELETE
+`
+
 # Usage
 
 With only npm:
