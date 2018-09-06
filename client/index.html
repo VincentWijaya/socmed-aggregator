@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+
+<head>
+  <meta charset="utf-8">
+  <title></title>
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css" crossorigin="anonymous">
+  <script src="https://code.jquery.com/jquery-3.3.1.min.js" integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8="
+    crossorigin="anonymous"></script>
+  <style media="screen">
+    body {
+      padding-top: 65px;
+    }
+
+    .navbar-right p {
+      float: right;
+      line-height: 50px;
+      color: white;
+      margin-left: 10px;
+      margin-bottom: 0px;
+    }
+
+    .row {
+      display: flex;
+    }
+
+    .row>div {
+      flex: 1;
+      /* border: 1px solid grey; */
+      margin-top: 10px;
+    }
+
+    .row-body {
+      height: 100vw;
+    }
+
+    .row-body .box {
+      border-right: 1px solid #eee;
+    }
+
+    .row-body div:last-child {
+      border-right: none;
+    }
+
+    input.search {
+      margin-bottom: 10px;
+    }
+  </style>
+</head>
+
+<body>
+  <script>    
+    window.fbAsyncInit = function() {
+      FB.init({
+        appId            : '300152977430583',
+        autoLogAppEvents : true,
+        xfbml            : true,
+        version          : 'v3.1'
+      });
+    };
+    
+    (function(d, s, id){
+       var js, fjs = d.getElementsByTagName(s)[0];
+       if (d.getElementById(id)) {return;}
+       js = d.createElement(s); js.id = id;
+       js.src = "https://connect.facebook.net/en_US/sdk.js";
+       fjs.parentNode.insertBefore(js, fjs);
+    }(document, 'script', 'facebook-jssdk'));
+    
+    function checkLoginState() {
+      FB.getLoginStatus(function(response) {
+        $.ajax({
+          url: `http://localhost:3000/user/login-fb`,
+          method: "POST",
+          data: {
+            token_fb: response.authResponse.accessToken
+          }
+        })
+          .done(token => {
+            localStorage.setItem('token', token.token)
+            location.reload()
+          })
+          .fail(err => {
+            console.log(err)
+          })
+      });
+    }
+  </script>
+
+  <div class="container">
+    <div class="row">
+      <nav class="navbar navbar-expand-lg navbar-dark bg-dark fixed-top">
+        <div class="container">
+          <a class="navbar-brand" href="#">HacktivGit</a>
+          <div class="navbar-right">
+            <fb:login-button scope="public_profile,email" onlogin="checkLoginState();" class="loginFb">
+            </fb:login-button>
+            <a href="#" onclick="logout()" class="logout">Logout</a>
+          </div>
+        </div>
+      </nav>
+    </div>
+
+    <div class="row row-body ">
+      <div class="col-md-3 box">
+        <h4>Users</h4>
+        <ul style="list-style-type:none" id="users">
+          <li> <a href="#" onclick="showRepo('vincentwijaya')">vincentwijaya</a> </li>
+          <li> <a href="#" onclick="showRepo('awtian')">awtian</a> </li>
+        </ul>
+      </div>
+      <div class="col-md-3 box">
+        <input class="search" type="text" placeholder="Search..."></input>
+
+        <div class="list">
+
+        </div>
+      </div>
+      <div class="col-md-6 box" id="container-repo">
+
+
+      </div>
+    </div>
+
+  </div>
+
+  <script>
+    if (localStorage.getItem('token')) {
+      $("h4").show()
+      $("#users").show()
+      $(".list").show()
+      $(".search").show()
+      $("#container-repo").show()
+      $(".loginFb").hide()
+      $(".logout").show()
+    } else {
+      $("h4").hide()
+      $("#users").hide()
+      $(".list").hide()
+      $(".search").hide()
+      $("#container-repo").hide()
+      $(".login-fb").show()
+      $(".logout").hide()
+    }
+    
+    function logout() {
+      localStorage.clear()
+      location.reload()
+    }
+    
+    $.ajax({
+      url: `http://localhost:3000/user/stared`,
+      method: "GET"
+    })
+      .done((users) => {
+        // console.log(users.data);
+        users.data.forEach(user => {
+          $(".list").append(
+            `
+            <div class="card-body">
+              <h5 class="card-title">
+                <a href="#" onclick="detail('${user.name}','${user.description}','${user.owner.login}')">${user.name}</a>
+              </h5>
+              <p class="card-text">${user.description}</p>
+              <p class="card-text">${user.language}</p>
+              <p class="card-text">${user.stargazers_count} Star</p>
+            </div>
+          `
+          )
+        })
+      })
+      .fail(err => {
+        console.log(err)
+      })
+      
+    $(".search").keyup(function() {
+       let name = $(this).val()
+       
+       if (name.length > 0) {
+         $.ajax({
+           url: `http://localhost:3000/user/stared/?name=${name}`,
+           method: "POST"
+         })
+           .done((users) => {
+             $(".list").text("")
+             users.forEach(user => {
+               $(".list").append(
+                 `
+                 <div class="card-body">
+                   <h5 class="card-title">
+                     <a href="#" onclick="detail('${user.name}','${user.description}','${user.owner.login}')">${user.name}</a>
+                   </h5>
+                   <p class="card-text">${user.description}</p>
+                   <p class="card-text">${user.stargazers_count} Star</p>
+                 </div>
+               `
+               )
+             })
+           })
+           .fail(err => {
+             console.log(err)
+           })
+       } else {
+           $(".list").text("")
+       }
+     })
+    
+    function detail(name, description, username) {
+      console.log(name, description, username);
+      $('#container-repo').text('')
+      $('#container-repo').append(`
+        <h1>${name}</h1>
+        <p class="lead">
+          by
+          <a href="#">${username}</a>
+          </p>
+          <hr>
+          
+          <p class="lead">${description}</p>
+      `)
+    }
+    
+    function showRepo(username) {
+      $.ajax({
+        url: `http://localhost:3000/user/${username}`,
+        method: "GET"
+      })
+        .done((users) => {
+          console.log(users.data);
+          $(".list").text("")
+          users.data.forEach(user => {
+            $(".list").append(
+              `
+              <div class="card-body">
+                <h5 class="card-title">
+                  <a href="#" onclick="detail('${user.name}','${user.description}','${user.owner.login}')">${user.name}</a>
+                </h5>
+                <p class="card-text">${user.description}</p>
+                <p class="card-text">${user.language}</p>
+                <p class="card-text">${user.stargazers_count} Stars</p>
+                
+              </div>
+            `
+            )
+          })
+        })
+        .fail(err => {
+          console.log(err);
+        })
+    } 
+  </script>
+</body>
+
+</html>
