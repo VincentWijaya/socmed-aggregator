@@ -1,5 +1,7 @@
 # star-aggregator
 
+:fire:Both of API and Web Server need facebook login:fire:
+
 ## How to install
 
 1. Clone this repo (OF COURSE AND ABSOLUTELY :smile:)
