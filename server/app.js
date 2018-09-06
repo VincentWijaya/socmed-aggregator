@@ -5,11 +5,10 @@ const express = require('express');
 const cors = require('cors')
 const path = require('path');
 const mongoose = require('mongoose')
+const session = require('express-session')
 
 const indexRouter = require('./routes/index');
 const userRouter = require('./routes/user');
-
-const checkLogin = require('./middleware/isLogin') 
 
 const app = express();
 
@@ -23,6 +22,12 @@ db.on('error', console.error.bind(console, 'connection error:'));
 db.once('open', function() {
   console.log('Connected to MongoDB');
 });
+
+app.use(session({
+  secret: 'keyboard cat',
+  resave: false,
+  saveUninitialized: true
+}))
 
 app.use(cors())
 app.use(express.json());
